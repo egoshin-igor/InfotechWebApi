@@ -1,35 +1,44 @@
-﻿using TestApp.Application.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using TestApp.Application.Models;
+using TestApp.Infrastructure;
 
 namespace TestApp.Application.Repositories
 {
-    public class InMemoryUserRepository : IUserRepository
+    public class UserRepository : IUserRepository
     {
-        private static List<User> _users = new List<User>();
+        private readonly TestAppDbContext _dbContext;
+        private DbSet<User> _users => _dbContext.Set<User>();
 
-        public void AddUser(User user)
+        public UserRepository( TestAppDbContext dbContext )
         {
-            user.DefineId( _users.Count + 1 );
-            _users.Add(user);
+            _dbContext = dbContext;
+        }
+
+        public void AddUser( User user )
+        {
+            _users.Add( user );
+            _dbContext.SaveChanges();
+        }
+
+        public void DeleteByUser( User user )
+        {
+            _dbContext.Remove( user );
+            _dbContext.SaveChanges();
         }
 
         public IReadOnlyList<User> GetAll()
         {
-            return _users;
+            return _users.ToList();
+        }
+
+        public User GetByUserId( int userId )
+        {
+            return _users.FirstOrDefault( x => x.Id == userId );
         }
 
         public User GetByUsername( string username )
         {
-            return _users.FirstOrDefault(x => x.UserName == username);
-        }
-
-        public User GetByUserId(int userId)
-        {
-            return _users.FirstOrDefault(x => x.Id == userId);
-        }
-
-        public void DeleteByUser(User user)
-        {
-            _users.Remove(user);
+            return _users.FirstOrDefault( x => x.UserName == username );
         }
     }
 }
